@@ -1,99 +1,80 @@
-/**
- * Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
- *
- * SPDX-License-Identifier: BSD-3-Clause
- */
-
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 
-#define PI 3.142
-#define WHEEL_RIM 6.4
+#define PI 3.14159
+#define WHEEL_DIAMETER 6.5
+#define DEBOUNCE_DELAY_MS 3
 
-// Define a structure to represent the stopwatch
+// Define a global variable to store the last event time for debouncing
+static uint32_t last_event_time = 0;
+
+// Define a structure to represent the encoder data
 typedef struct {
-    bool running;
     uint64_t start_time;
-    uint64_t end_time;
-} Stopwatch;
+    float quarter_rotation;
+    float arch;
+    int pinhole;
+    float total_distance;
+    uint64_t milliseconds_per_cycle;
+    float speed;
+} Encoder;
 
-static char event_str[128];
-static Stopwatch sw;
+// Initialize an instance of the Encoder structure
+Encoder encoder = {0, 0.0, 0.0, 0, 0.0, 0, 0.0};
 
-float half_rotation = (PI * WHEEL_RIM) / 2;
-float arch = 0;
-int pinhole = 0;
-float total_distance = 0.0;
-uint64_t milliseconds_per_cycle = 0.0;
-float speed = 0.0; 
-
-void gpio_event_string(char *buf, uint32_t events);
-
-void gpio_callback(uint gpio, uint32_t events) {
-    // Put the GPIO event(s) that just happened into event_str
-    // so we can print it
-    gpio_event_string(event_str, events);
-    // printf("GPIO %d %s\n", pinhole, event_str);
-    arch = half_rotation / 10;
-
-    total_distance = total_distance + arch;
-    printf("%.2f cm\n", total_distance);
-
-    if (pinhole == 0) {
-        sw.start_time = time_us_64();
-        pinhole++;
-    } else if (pinhole > 0 && pinhole < 9) {
-        pinhole++;
-    } else {
-        milliseconds_per_cycle = (time_us_64() - sw.start_time) / 1000;
-        speed = ((100 / half_rotation) * milliseconds_per_cycle) / 1000;
-        printf("%lld milliseconds\n", milliseconds_per_cycle);
-        printf("%.4f m/s\n", speed);
-        pinhole = 0;
-    }
-}
+// Function to handle GPIO interrupt events
+void gpio_callback(uint gpio, uint32_t events);
 
 int main() {
     stdio_init_all();
 
-    printf("Hello GPIO IRQ\n");
-    // Edge-triggered interrupts
-    //gpio_set_irq_enabled_with_callback(2, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &gpio_callback);
-    gpio_set_irq_enabled_with_callback(2, GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
+    // Calculate the properties of the encoder movement
+    encoder.quarter_rotation = (PI * WHEEL_DIAMETER) / 4;
 
-    // Level-triggered interrupts
-    //gpio_set_irq_enabled_with_callback(2, GPIO_IRQ_LEVEL_HIGH | GPIO_IRQ_LEVEL_LOW, true, &gpio_callback);
+    sleep_ms(3000);
+
+    printf("Hello ENCODER!\n\n");
+
+    // Set up GPIO interrupt on pin 2 with a rising edge trigger and callback function
+    gpio_set_irq_enabled_with_callback(2, GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
 
     // Wait forever
     while (1);
 }
 
+// Callback function to handle GPIO interrupt events
+void gpio_callback(uint gpio, uint32_t events) {
 
-static const char *gpio_irq_str[] = {
-        "LEVEL_LOW",  // 0x1
-        "LEVEL_HIGH", // 0x2
-        "EDGE_FALL",  // 0x4
-        "EDGE_RISE"   // 0x8
-};
+    // Get the current time in milliseconds since boot
+    uint32_t current_time = to_ms_since_boot(get_absolute_time());
 
-void gpio_event_string(char *buf, uint32_t events) {
-    for (uint i = 0; i < 4; i++) {
-        uint mask = (1 << i);
-        if (events & mask) {
-            // Copy this event string into the user string
-            const char *event_str = gpio_irq_str[i];
-            while (*event_str != '\0') {
-                *buf++ = *event_str++;
-            }
-            events &= ~mask;
+    // Check if enough time has passed to debounce the signal
+    if (current_time - last_event_time >= DEBOUNCE_DELAY_MS) {
 
-            // If more events add ", "
-            if (events) {
-                *buf++ = ',';
-                *buf++ = ' ';
-            }
+        if (encoder.pinhole == 0) {
+            // Record the start time for the cycle
+            encoder.start_time = time_us_64();
+            encoder.pinhole++;
+        } else if (encoder.pinhole > 0 && encoder.pinhole < 4) {
+            // Increment the pinhole count
+            encoder.pinhole++;
+        } else {
+            // Calculate the total distance, milliseconds per cycle and speed
+            encoder.total_distance = encoder.total_distance + encoder.quarter_rotation;
+            encoder.milliseconds_per_cycle = (time_us_64() - encoder.start_time) / 1000;
+            encoder.speed = ((encoder.quarter_rotation / 100) * (1000 / encoder.milliseconds_per_cycle));
+
+            // Print the results
+            printf("%.2f cm\n", encoder.total_distance);
+            printf("%lld milliseconds\n", encoder.milliseconds_per_cycle);
+            printf("%.5f m/s\n\n", encoder.speed);
+
+            // Reset the pinhole count
+            encoder.pinhole = 0;
         }
+
+        // Update the last event time for debouncing
+        last_event_time = current_time;
     }
-    *buf++ = '\0';
 }
