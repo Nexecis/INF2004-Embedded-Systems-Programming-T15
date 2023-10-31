@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
 
@@ -32,8 +33,15 @@ int main() {
         int16_t x = ((buffer[0] << 8) | (buffer[1]));
         int16_t z = ((buffer[2] << 8) | (buffer[3]));
         int16_t y = ((buffer[4] << 8) | (buffer[5]));
+                
+        double scale = 0.00091;
+        double x_scale = x * scale;
+        double y_scale = y * scale;
 
-        printf("Magnetometer Data: X=%d, Y=%d, Z=%d\n", x, y, z);
+        double angle = atan2(y_scale, x_scale);    
+        double angle_degrees = angle * (180.0 / M_PI) + 180;
+
+        printf("Angle in degrees: %lf\n", angle_degrees);
 
         sleep_ms(1000);
     }
