@@ -1,7 +1,26 @@
-#include "pico/stdlib.h"
-#include "hardware/pwm.h"
+#include <stdio.h>                                  // Include the standard I/O library.
+#include "pico/cyw43_arch.h"                        // Include the CYW43 architecture-specific header.
+#include "pico/stdlib.h"                            // Include the Pico standard library.
+#include "FreeRTOS.h"                               // Include the FreeRTOS header.
+#include "task.h"                                   // Include the task management header.
+#include "queue.h"                                  // Include the queue header.
 #include "hardware/gpio.h"
 #include "hardware/adc.h"
+#include "hardware/pwm.h"
+
+#define QUEUE_SIZE 10                               // Define the size of the queues.
+
+#ifndef RUN_FREERTOS_ON_CORE
+#define RUN_FREERTOS_ON_CORE 0                      // Define the default core to run FreeRTOS on.
+#endif
+
+#define TEST_TASK_PRIORITY (tskIDLE_PRIORITY + 1UL) // Define the priority for the test task.
+
+static QueueHandle_t xTriggerQueue;
+static QueueHandle_t xSpeedAQueue;
+static QueueHandle_t xSpeedBQueue;
+static QueueHandle_t xSpeedQueue;
+
 
 // Define the GPIO pins for motor control
 #define MOTOR_ENA 0  // Enable motor A
@@ -12,195 +31,307 @@
 #define MOTOR_IN3 5  // Input 1 for motor B
 #define MOTOR_IN4 4  // Input 2 for motor B
 
-// Define GPIO pins for IR sensors
-#define IR_SENSOR_LEFT  6
-#define IR_SENSOR_RIGHT 7
+#define PI 3.14159
+#define WHEEL_DIAMETER 6.5
+#define DEBOUNCE_DELAY_MS 3
 
-// Define GPIO pins for encoder
-// Add more if needed
+// Define a global variable to store the last event time for debouncing
+static uint32_t last_event_time = 0;
 
-// Define GPIO pins for WiFi and other components
-// ...
+// Define a structure to represent the encoder data
+typedef struct {
+    uint64_t start_time;
+    float quarter_rotation;
+    float arch;
+    int pinhole;
+    float total_distance;
+    uint64_t milliseconds_per_cycle;
+    float speed;
+} Encoder;
+
+// Initialize an instance of the Encoder structure
+Encoder encoder = {0, 0.0, 0.0, 0, 0.0, 0, 0.0};
+
+// Callback function to handle GPIO interrupt events
+void check_speed_a_callback(uint gpio, uint32_t events) {
+
+    // Get the current time in milliseconds since boot
+    uint32_t current_time = to_ms_since_boot(get_absolute_time());
+
+    // Check if enough time has passed to debounce the signal
+    if (current_time - last_event_time >= DEBOUNCE_DELAY_MS) {
+
+        if (encoder.pinhole == 0) {
+            // Record the start time for the cycle
+            encoder.start_time = time_us_64();
+            encoder.pinhole++;
+        } else if (encoder.pinhole > 0 && encoder.pinhole < 4) {
+            // Increment the pinhole count
+            encoder.pinhole++;
+        } else {
+            // Calculate the total distance, milliseconds per cycle and speed
+            encoder.total_distance = encoder.total_distance + encoder.quarter_rotation;
+            encoder.milliseconds_per_cycle = (time_us_64() - encoder.start_time) / 1000;
+            encoder.speed = ((encoder.quarter_rotation / 100) * (1000 / encoder.milliseconds_per_cycle));
+
+            // Print the results
+            printf("%.2f cm\n", encoder.total_distance);
+            printf("%lld milliseconds\n", encoder.milliseconds_per_cycle);
+            printf("%.5f m/s\n\n", encoder.speed);
+
+            // Reset the pinhole count
+            encoder.pinhole = 0;
+        }
+
+        // Update the last event time for debouncing
+        last_event_time = current_time;
+    }
+    
+    xQueueSend(xSpeedAQueue, &encoder.speed, portMAX_DELAY);
+}
+
+// Callback function to handle GPIO interrupt events
+void check_speed_b_callback(uint gpio, uint32_t events) {
+
+    // Get the current time in milliseconds since boot
+    uint32_t current_time = to_ms_since_boot(get_absolute_time());
+
+    // Check if enough time has passed to debounce the signal
+    if (current_time - last_event_time >= DEBOUNCE_DELAY_MS) {
+
+        if (encoder.pinhole == 0) {
+            // Record the start time for the cycle
+            encoder.start_time = time_us_64();
+            encoder.pinhole++;
+        } else if (encoder.pinhole > 0 && encoder.pinhole < 4) {
+            // Increment the pinhole count
+            encoder.pinhole++;
+        } else {
+            // Calculate the total distance, milliseconds per cycle and speed
+            encoder.total_distance = encoder.total_distance + encoder.quarter_rotation;
+            encoder.milliseconds_per_cycle = (time_us_64() - encoder.start_time) / 1000;
+            encoder.speed = ((encoder.quarter_rotation / 100) * (1000 / encoder.milliseconds_per_cycle));
+
+            // Print the results
+            printf("%.2f cm\n", encoder.total_distance);
+            printf("%lld milliseconds\n", encoder.milliseconds_per_cycle);
+            printf("%.5f m/s\n\n", encoder.speed);
+
+            // Reset the pinhole count
+            encoder.pinhole = 0;
+        }
+
+        // Update the last event time for debouncing
+        last_event_time = current_time;
+    }
+
+    xQueueSend(xSpeedBQueue, &encoder.speed, portMAX_DELAY);
+}
 
 void motor_setup() {
     // Configure GPIO pins for motor control as outputs
-    // ...
+    gpio_init(MOTOR_ENA); // Initialize the motor A enable pin
+    gpio_init(MOTOR_IN1); // Initialize motor A input 1
+    gpio_init(MOTOR_IN2); // Initialize motor A input 2
+
+    gpio_init(MOTOR_ENB); // Initialize the motor B enable pin
+    gpio_init(MOTOR_IN3); // Initialize motor B input 1
+    gpio_init(MOTOR_IN4); // Initialize motor B input 2
+
+    gpio_set_dir(MOTOR_ENA, GPIO_OUT); // Set motor A enable pin as an output
+    gpio_set_dir(MOTOR_IN1, GPIO_OUT); // Set motor A input 1 as an output
+    gpio_set_dir(MOTOR_IN2, GPIO_OUT); // Set motor A input 2 as an output
+
+    gpio_set_dir(MOTOR_ENB, GPIO_OUT); // Set motor B enable pin as an output
+    gpio_set_dir(MOTOR_IN3, GPIO_OUT); // Set motor B input 1 as an output
+    gpio_set_dir(MOTOR_IN4, GPIO_OUT); // Set motor B input 2 as an output
 
     // Initialize motor control (set ENA and ENB HIGH for full speed)
-    // ...
-}
+    gpio_put(MOTOR_ENA, 1); // Enable motor A
+    gpio_put(MOTOR_IN1, 0); // Set motor A input 1 to low
+    gpio_put(MOTOR_IN2, 0); // Set motor A input 2 to low
 
-void ir_sensor_setup() {
-    // Initialize IR sensor GPIO pins as inputs
-    gpio_init(IR_SENSOR_LEFT);
-    gpio_init(IR_SENSOR_RIGHT);
-    gpio_set_dir(IR_SENSOR_LEFT, GPIO_IN);
-    gpio_set_dir(IR_SENSOR_RIGHT, GPIO_IN);
-}
-
-int read_ir_sensor(gpio_num_t ir_sensor_pin) {
-    return gpio_get(ir_sensor_pin);
+    gpio_put(MOTOR_ENB, 1); // Enable motor B
+    gpio_put(MOTOR_IN3, 0); // Set motor B input 1 to low
+    gpio_put(MOTOR_IN4, 0); // Set motor B input 2 to low
 }
 
 void move_motor_a_forward(uint speed) {
     // Set motor A direction for forward motion
-    // ...
+    gpio_put(MOTOR_IN1, 1); // Set motor A input 1 to high
+    gpio_put(MOTOR_IN2, 0); // Set motor A input 2 to low
 
     // Adjust the speed of motor A using PWM (e.g., speed 0-255)
-    // ...
+    pwm_set_wrap(0, 255);  // Set the PWM period for motor speed control
+    pwm_set_chan_level(0, PWM_CHAN_A, speed);  // Set the motor A speed
 }
 
 void move_motor_a_backward(uint speed) {
     // Set motor A direction for backward motion
-    // ...
+    gpio_put(MOTOR_IN1, 0); // Set motor A input 1 to low
+    gpio_put(MOTOR_IN2, 1); // Set motor A input 2 to high
 
     // Adjust the speed of motor A using PWM (e.g., speed 0-255)
-    // ...
+    pwm_set_wrap(0, 255);  // Set the PWM period for motor speed control
+    pwm_set_chan_level(0, PWM_CHAN_A, speed);  // Set the motor A speed
 }
 
 void move_motor_b_forward(uint speed) {
     // Set motor B direction for forward motion
-    // ...
+    gpio_put(MOTOR_IN3, 1); // Set motor B input 1 to high
+    gpio_put(MOTOR_IN4, 0); // Set motor B input 2 to low
 
     // Adjust the speed of motor B using PWM (e.g., speed 0-255)
-    // ...
+    pwm_set_wrap(1, 255);  // Set the PWM period for motor speed control
+    pwm_set_chan_level(1, PWM_CHAN_A, speed);  // Set the motor B speed
 }
 
 void move_motor_b_backward(uint speed) {
     // Set motor B direction for backward motion
-    // ...
+    gpio_put(MOTOR_IN3, 0); // Set motor B input 1 to low
+    gpio_put(MOTOR_IN4, 1); // Set motor B input 2 to high
 
     // Adjust the speed of motor B using PWM (e.g., speed 0-255)
-    // ...
+    pwm_set_wrap(1, 255);  // Set the PWM period for motor speed control
+    pwm_set_chan_level(1, PWM_CHAN_A, speed);  // Set the motor B speed
 }
 
 void stop() {
     // Stop both motors
-    // ...
+    gpio_put(MOTOR_IN1, 0); // Set motor A input 1 to low
+    gpio_put(MOTOR_IN2, 0); // Set motor A input 2 to low
+    pwm_set_chan_level(0, PWM_CHAN_A, 0);  // Set PWM duty cycle for motor A to 0
+
+    gpio_put(MOTOR_IN3, 0); // Set motor B input 1 to low
+    gpio_put(MOTOR_IN4, 0); // Set motor B input 2 to low
+    pwm_set_chan_level(1, PWM_CHAN_A, 0);  // Set PWM duty cycle for motor B to 0
 }
 
-// Function to demonstrate perfect straight drive
-void straight_drive() {
-    // Implement the logic for perfect straight drive using IR sensors
-    // Adjust motor speeds based on IR sensor feedback
-    // ...
+void check_speed_a_task(__unused void *params) {
 
-    // Example:
-    move_motor_a_forward(255);
-    move_motor_b_forward(255);
+    // Calculate the properties of the encoder movement
+    encoder.quarter_rotation = (PI * WHEEL_DIAMETER) / 4;
 
-    // ...
+    // Set up GPIO interrupt on pin 2 with a rising edge trigger and callback function
+    gpio_set_irq_enabled_with_callback(8, GPIO_IRQ_EDGE_RISE, true, &check_speed_a_callback);
 
-    // Stop motors
-    stop();
+    while (true);
+
 }
 
-// Function to demonstrate snaking without touching a line
-void snaking() {
-    // Implement the logic for snaking using IR sensors
-    // Adjust motor speeds based on IR sensor feedback
-    // ...
+void check_speed_b_task(__unused void *params) {
 
-    // Example:
-    move_motor_a_forward(255);
-    move_motor_b_forward(200);
+    // Calculate the properties of the encoder movement
+    encoder.quarter_rotation = (PI * WHEEL_DIAMETER) / 4;
 
-    // ...
+    // Set up GPIO interrupt on pin 2 with a rising edge trigger and callback function
+    gpio_set_irq_enabled_with_callback(9, GPIO_IRQ_EDGE_RISE, true, &check_speed_b_callback);
 
-    // Stop motors
-    stop();
+    while (true);
+
 }
 
-// Function to demonstrate right-angle turn
-void right_angle_turn() {
-    // Implement the logic for right-angle turn using IR sensors
-    // Adjust motor speeds based on IR sensor feedback
-    // ...
+void check_speed_task(__unused void *params) {
+    float speedA = 0.0;
+    float speedB = 0.0;
+    float difference = 0.0;
+    int send_speed = 0;
 
-    // Example:
-    move_motor_a_backward(180);
-    move_motor_b_forward(180);
+    while (true) {
+        if (xQueueReceive(xSpeedAQueue, &speedA, portMAX_DELAY) &&
+            xQueueReceive(xSpeedBQueue, &speedB, portMAX_DELAY)) {
+                difference = speedA - speedB;
 
-    // ...
-
-    // Stop motors
-    stop();
+                if (difference > 0 ) {
+                    send_speed = 1;
+                    xQueueSend(xSpeedQueue, &send_speed, portMAX_DELAY);
+                } else if (difference < 0) {
+                    send_speed = 2;
+                    xQueueSend(xSpeedQueue, &send_speed, portMAX_DELAY);
+                } else if (difference == 0) {
+                    send_speed = 0;
+                    xQueueSend(xSpeedQueue, &send_speed, portMAX_DELAY);
+                }
+                
+        }
+    }
 }
 
-// Function to demonstrate left-angle turn
-void left_angle_turn() {
-    // Implement the logic for left-angle turn using IR sensors
-    // Adjust motor speeds based on IR sensor feedback
-    // ...
+void move_forward_task(__unused void *params) {
+    int received_message = 0;
+    int received_difference = 0;
+    int speedA = 0;
+    int speedB = 0;
 
-    // Example:
-    move_motor_a_forward(180);
-    move_motor_b_backward(180);
+    // Configure BUTTON_PIN as an input with pull-up enabled
+    gpio_set_dir(15, GPIO_IN);
+    gpio_set_pulls(15, true, false);
 
-    // ...
 
-    // Stop motors
-    stop();
+    xQueueReceive(xTriggerQueue, &received_message, portMAX_DELAY);
+    xQueueReceive(xSpeedQueue, &received_difference, portMAX_DELAY);
+
+    while (true) {
+        if (gpio_get(15)) {
+            speedA = speedB = 100;
+            move_motor_a_forward(speedA);
+            move_motor_b_forward(speedB);
+            gpio_put(8, 1);
+            gpio_put(9, 1);
+        } else if (received_message == 1 && received_difference == 1) {
+            speedA += 20;
+            move_motor_a_forward(speedA);
+        } else if (received_message == 1 && received_difference == 2) {
+            speedB += 20;
+            move_motor_b_forward(speedB);
+        } else if (received_message == 0) {
+            stop();
+            gpio_put(8, 0);
+            gpio_put(9, 0);
+        }
+    }
 }
 
-// Function to demonstrate barcode detection and WiFi communication
-void barcode_detection() {
-    // Implement the logic for detecting barcode using IR sensors, encoder, and WiFi
-    // Adjust motor speeds based on sensor feedback
-    // Transmit barcode data via WiFi
-    // ...
+void vLaunch(void) {
+    // Create queues.
+    xTriggerQueue = xQueueCreate(QUEUE_SIZE, sizeof(float));
+    xSpeedAQueue = xQueueCreate(QUEUE_SIZE, sizeof(float));
+    xSpeedBQueue = xQueueCreate(QUEUE_SIZE, sizeof(float));
+    xSpeedQueue = xQueueCreate(QUEUE_SIZE, sizeof(float));
 
-    // Example:
-    move_motor_a_forward(255);
-    move_motor_b_forward(255);
+    // Create tasks.
+    xTaskCreate(move_forward_task, "ForwardThread", configMINIMAL_STACK_SIZE, NULL, 9, NULL);
+    xTaskCreate(check_speed_a_task, "SpeedAThread", configMINIMAL_STACK_SIZE, NULL, 9, NULL);
+    xTaskCreate(check_speed_b_task, "SpeedBThread", configMINIMAL_STACK_SIZE, NULL, 9, NULL);
+    xTaskCreate(check_speed_task, "SpeedThread", configMINIMAL_STACK_SIZE, NULL, 9, NULL);
 
-    // ...
+#if NO_SYS && configUSE_CORE_AFFINITY && configNUM_CORES > 1
+    vTaskCoreAffinitySet(task, 1);                // Set core affinity for the main task.
+#endif
 
-    // Stop motors
-    stop();
+    vTaskStartScheduler();                         // Start the FreeRTOS scheduler.
 }
 
-// Function to demonstrate obstacle detection and response
-void obstacle_detection() {
-    // Implement the logic for detecting obstacles using IR sensors, encoder, and ultrasonic sensor
-    // Adjust motor speeds based on sensor feedback
-    // Stop or reverse/turn based on obstacle detection
-    // ...
+int main(void) {
+    stdio_init_all();                              // Initialize standard I/O.
 
-    // Example:
-    move_motor_a_forward(255);
-    move_motor_b_forward(255);
+    const char *rtos_name;
+#if (portSUPPORT_SMP == 1)
+    rtos_name = "FreeRTOS SMP";                   // Define the name for SMP-enabled FreeRTOS.
+#else
+    rtos_name = "FreeRTOS";                       // Define the name for regular FreeRTOS.
+#endif
 
-    // ...
-
-    // Stop motors
-    stop();
-}
-
-int main() {
-    stdio_init_all();
-    motor_setup();
-    ir_sensor_setup();
-
-    // Straight Path Test
-    straight_drive();
-
-    // Snaking Test
-    snaking();
-
-    // Right-angle Turn Test
-    right_angle_turn();
-
-    // Left-angle Turn Test
-    left_angle_turn();
-
-    // Barcode Detection Test
-    barcode_detection();
-
-    // Obstacle Detection Test
-    obstacle_detection();
-
-    // ... (Other tests)
-
-    return 0;
+#if (portSUPPORT_SMP == 1) && (configNUM_CORES == 2)
+    printf("Starting %s on both cores:\n", rtos_name);
+    vLaunch();                                     // Start FreeRTOS on both cores.
+#elif (RUN_FREERTOS_ON_CORE == 1)
+    printf("Starting %s on core 1:\n", rtos_name);
+    multicore_launch_core1(vLaunch());             // Start FreeRTOS on core 1.
+    while (true);
+#else
+    printf("Starting %s on core 0:\n", rtos_name);
+    vLaunch();                                     // Start FreeRTOS on core 0.
+#endif
+    return 0;                                      // Return from the main function.
 }
