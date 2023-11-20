@@ -7,6 +7,10 @@
 #include "hardware/gpio.h"
 #include "hardware/adc.h"
 #include "hardware/pwm.h"
+#include <string.h>                                 // Include for TCP connection
+#include <stdlib.h>                                 // Include for TCP connection
+#include "lwip/pbuf.h"                              // Include for TCP connection
+#include "lwip/tcp.h"                               // Include for TCP connection
 
 #define QUEUE_SIZE 10                               // Define the size of the queues.
 
@@ -35,8 +39,26 @@ static QueueHandle_t xSpeedQueue;
 #define WHEEL_DIAMETER 6.5
 #define DEBOUNCE_DELAY_MS 3
 
+#define TCP_PORT 4242
+#define BUF_SIZE 6
+#define TEST_ITERATIONS 1
+#define WIFI_SSID "Nexecis"
+#define WIFI_PASSWORD "nrro6661"
+
 // Define a global variable to store the last event time for debouncing
 static uint32_t last_event_time = 0;
+
+// Define a structure to represent the TCP data
+typedef struct TCP_SERVER_T_ {
+    struct tcp_pcb *server_pcb;
+    struct tcp_pcb *client_pcb;
+    bool complete;
+    uint8_t buffer_sent[BUF_SIZE];
+    uint8_t buffer_recv[BUF_SIZE];
+    int sent_len;
+    int recv_len;
+    int run_count;
+} TCP_SERVER_T;
 
 // Define a structure to represent the encoder data
 typedef struct {
@@ -292,6 +314,58 @@ void move_forward_task(__unused void *params) {
     }
 }
 
+void run_tcp_server_test(void) {
+    TCP_SERVER_T *state = calloc(1, sizeof(TCP_SERVER_T));
+    tcp_server_open(state);
+    while(!state->complete);
+    free(state);
+}
+
+static void tcp_server_open(void *arg) {
+    TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
+    ip4addr_ntoa(netif_ip4_addr(netif_list));
+
+    struct tcp_pcb *pcb = tcp_new_ip_type(IPADDR_TYPE_ANY);
+    tcp_bind(pcb, NULL, TCP_PORT);
+    state->server_pcb = tcp_listen_with_backlog(pcb, 1);
+
+    tcp_arg(state->server_pcb, state);
+    tcp_accept(state->server_pcb, tcp_server_accept);
+}
+
+static void tcp_server_accept(void *arg, struct tcp_pcb *client_pcb, err_t err) {
+    TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
+    state->client_pcb = client_pcb;
+    tcp_arg(client_pcb, state);
+    tcp_recv(client_pcb, tcp_on_recv_action);
+}
+
+err_t tcp_on_recv_action(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err){
+    TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
+
+    if (p->tot_len > 0) {
+        // Receive the buffer
+        const uint16_t buffer_left = BUF_SIZE - state->recv_len;
+        state->recv_len += pbuf_copy_partial(p, state->buffer_recv + state->recv_len,
+                                             p->tot_len > buffer_left ? buffer_left : p->tot_len, 0);
+        tcp_recved(tpcb, p->tot_len);
+    }
+    pbuf_free(p);
+
+    uint8_t received_byte;
+    printf("Received data: ");
+    for (int i = 0; i < state->recv_len; i++) {
+        received_byte = state->buffer_recv[i];
+        printf("%c", received_byte);
+
+        //do something with the received data
+    }
+    printf("\n");
+
+    return ERR_OK;
+}
+
+
 void vLaunch(void) {
     // Create queues.
     xTriggerQueue = xQueueCreate(QUEUE_SIZE, sizeof(float));
@@ -314,6 +388,9 @@ void vLaunch(void) {
 
 int main(void) {
     stdio_init_all();                              // Initialize standard I/O.
+    cyw43_arch_init();
+    cyw43_arch_enable_sta_mode();
+    cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, 0x00400004, 30000)
 
     const char *rtos_name;
 #if (portSUPPORT_SMP == 1)
