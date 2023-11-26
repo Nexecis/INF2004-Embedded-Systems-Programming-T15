@@ -136,6 +136,24 @@ char encodeBarcode(const char *barcode) {
     }
 }
 
+// Function to reverse a string
+void reverseString(char str[]) {
+    int length = strlen(str);
+    int start = 0;
+    int end = length - 1;
+
+    while (start < end) {
+        // Swap characters at start and end
+        char temp = str[start];
+        str[start] = str[end];
+        str[end] = temp;
+
+        // Move the pointers towards each other
+        start++;
+        end--;
+    }
+}
+
 int main() {
     stdio_init_all();
     initIRSensor();
@@ -144,6 +162,7 @@ int main() {
     int counter = 0;
     char barcode[65];  // String to store the barcode
     barcode[0] = '\0';  // Initialize the string
+    bool reverse = 0;
     
     uint32_t first_reading = measurePulseWidth(black_line);
     printf("first_reading: %u us\n", first_reading);
@@ -151,6 +170,7 @@ int main() {
     strcpy(bar_type, "1");  // Thin black bar
     strcat(barcode, bar_type);
     counter++;
+    printf("Counter: %d\n", counter);
     black_line = !black_line; // swap the colour to white line
 
     while (1) {
@@ -173,7 +193,6 @@ int main() {
             }
         }
         
-        // if (pulse_width > 10) {
         printf("Detected bar type: %s with pulse width: %u us\n", bar_type, pulse_width);
 
         counter++;
@@ -182,18 +201,35 @@ int main() {
         // Concatenate the result of bar_type to the barcode string
         strcat(barcode, bar_type);
         printf("Barcode Binaries: %s\n\n", barcode);
-
+        if (counter == 2) {
+            if (bar_type != "000") {
+                printf("Reverse Detected!\n");
+                reverse = 1;
+            }
+        }
         if (counter == 29)
         {
-            strcat(barcode, "0"); // add a 0 at the back of the binary string, signalling the end of barcode (barcode ends with 0)
-            printf("len(barcode): %d\n", strlen(barcode));
-            printf("Final Barcode Binaries: %s\n", barcode);
-            char encodedChar = encodeBarcode(barcode);
-            printf("Encoded Character: %c\n", encodedChar);
-            barcode[0] = '\0';
-            break;
+            if (reverse == 0) {
+                strcat(barcode, "0"); // add a 0 at the back of the binary string, signalling the end of barcode (barcode ends with 0)
+                printf("len(barcode): %d\n", strlen(barcode));
+                printf("Final Barcode Binaries: %s\n", barcode);
+                char encodedChar = encodeBarcode(barcode);
+                printf("Encoded Character: %c\n", encodedChar);
+                barcode[0] = '\0';
+                break;
+            }
+            else { // reverse == 1, so do reversing
+                reverseString(barcode); // reverse the string
+                strcat(barcode, "0"); // add a 0 at the back of the binary string, signalling the end of barcode (barcode ends with 0)
+                printf("len(barcode): %d\n", strlen(barcode));
+                printf("Final Barcode Binaries: %s\n", barcode);
+                char encodedChar = encodeBarcode(barcode);
+                printf("Encoded Character: %c\n", encodedChar);
+                barcode[0] = '\0';
+                break;
+            }
+            
         }
-        // }
 
         black_line = !black_line; // swap the colour of the barcode line
     }
