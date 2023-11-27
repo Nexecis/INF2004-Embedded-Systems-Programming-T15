@@ -202,7 +202,7 @@ int main() {
         strcat(barcode, bar_type);
         printf("Barcode Binaries: %s\n\n", barcode);
         if (counter == 2) {
-            if (bar_type != "000") {
+            if (strcmp(bar_type, "000") != 0) {
                 printf("Reverse Detected!\n");
                 reverse = 1;
             }
