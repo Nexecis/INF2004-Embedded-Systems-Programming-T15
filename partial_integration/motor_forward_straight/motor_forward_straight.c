@@ -314,7 +314,7 @@ int main(void) {
     gpio_set_dir(28, GPIO_OUT);
     gpio_put(28, 1);
 
-        gpio_init(28);
+    gpio_init(28);
     gpio_set_dir(28, GPIO_OUT);
     gpio_put(28, 1);
 

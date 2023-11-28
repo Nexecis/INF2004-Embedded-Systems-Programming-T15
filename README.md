@@ -22,7 +22,8 @@ These instructions will guide you through the setup and deployment of the motor 
 
 1. **Setting Up the Pico SDK**:
    Follow the instructions from the Raspberry Pi Foundation to set up the Pico SDK and toolchain on your development machine:
-   [Getting started with Raspberry Pi Pico](https://www.raspberrypi.org/documentation/pico/getting-started/).
+   [Getting started with Raspberry Pi Pico](https://datasheets.raspberrypi.com/pico/getting-started-with-pico.pdf).
+
 
 2. **Cloning the Repository**:
    Clone the repository to your local machine using git:
@@ -70,24 +71,26 @@ Drag and drop the generated .uf2 file from the build directory onto the RPI-RP2 
 Under the partial_integration folder, you will find 4 subfolders for each of this project's partial integration.
 
 1. /motor_forward_straight
-2. /barcode_scanner_wifi
-3. /motor_turn_magn
+2. /motor_turn_magno
+3. /barcode_scanner_wifi
 4. /obstacle_detector
 
-### motor_forward_straight
+
+
+## motor_forward_straight
 
 The diagram below is the flowchart for the integration of:
 
 1. motor driver
-2. encoder drivers
+2. encoder driver
 3. PID Controller
 4. FreeRTOS
 
-![Screenshot of integration #1 Flowchart - Visual Studio Code](/Diagram/flowchart%20-%20motor_forward_straight.png)
+![Screenshot of integration #1 Flowchart - Visual Studio Code](/Diagram/Flowchart_motor_forward_straight.png)
 
 ### What it does:
 
-It has 3 tasks: Task 1) check_speed_a_task, Task 2) check_speed_b_task, Task 3) move_forward_task.
+It has 3 RTOS tasks: Task 1) check_speed_a_task, Task 2) check_speed_b_task, Task 3) move_forward_task.
 
 Task 1 & 2 uses GPIO Interrupts together with the encoder module to trigger the check_speed_callback(). This callback will then calculate the speed for each wheel and send the value trhough the Queue Handlers managed by RTOS.
 
@@ -97,4 +100,30 @@ Task 3 will then receive the value from the queue buffers. with that, based on t
 
 Finally, the speed of the motor chnages according to the speed_correction as shown below:
 
-![Screenshot of motor speed change code - Visual Studio Code](/docs/speed_changes.png.png)
+![Screenshot of motor speed change code - Visual Studio Code](/docs/speed_changes.png)
+
+
+
+## motor_turn_magno
+
+The diagram below is the flowchart for the integration of:
+
+1. motor driver
+2. magnometer driver
+
+![Screenshot of integration #2 Flowchart - Visual Studio Code](/Diagram/Flowchart_motor_turn_magno.png)
+
+### What it does:
+
+In main(), the motor can either turn left or right, based on which line of code you uncomment and comment at a given point of time.
+
+![Screenshot of turning sides code - Visual Studio Code](/docs/turn_left_or_right.png)
+
+
+
+## barcode_scanner_wifi
+
+
+
+
+## obstacle_detector

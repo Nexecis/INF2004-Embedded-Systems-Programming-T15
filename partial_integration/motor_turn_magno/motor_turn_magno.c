@@ -196,8 +196,9 @@ int main() {
     init_i2c_pin(I2C, BAUDRATE, I2C_SDA_PIN, I2C_SCL_PIN);
     init_magnometer();
 
+    //uncomment and comment to test turning left or right (vice-versa)
     //leftTurn();
     rightTurn();
 
     return 0;
-}
+}Z
