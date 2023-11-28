@@ -32,7 +32,6 @@ These instructions will guide you through the setup and deployment of the motor 
 Create a build directory and navigate into it:
 
     ```bash
-    Copy code
     mkdir build
     cd build
     ```
@@ -40,7 +39,6 @@ Create a build directory and navigate into it:
 2. **Run CMake to build the project**:
 
     ```bash
-    Copy code
     cmake ..
     make
     ```
