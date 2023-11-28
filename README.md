@@ -12,7 +12,11 @@ These instructions will guide you through the setup and deployment of the motor 
 - C/C++ development environment with `arm-none-eabi-gcc` compiler
 - CMake (version 3.12 or later)
 - FreeRTOS (bundled with this project)
-- Motor driver and encoders corresponding to the hardware setup in the code
+- Motor driver and encoders for motor control feedback
+- IR sensors for barcode recognition
+- Ultrasound sensors for obstacle detection and distance measurement
+- Appropriate connecting wires and resistors for sensor integration
+- Personal computer for compiling and uploading the firmware to the Raspberry Pi Pico W
 
 ### Installing
 
@@ -43,7 +47,7 @@ Create a build directory and navigate into it:
     make
     ```
 
-Uploading to the Pico W:
+3. **Uploading to the Pico W**:
 
 Connect your Raspberry Pi Pico W to your computer while holding the BOOTSEL button to put it into USB mass storage mode.
 
