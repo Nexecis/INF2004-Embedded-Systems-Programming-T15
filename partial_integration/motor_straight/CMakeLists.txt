@@ -1,0 +1,63 @@
+cmake_minimum_required(VERSION 3.12)
+
+# Pull in SDK (must be before project)
+include(pico_sdk_import.cmake)
+
+include(pico_extras_import_optional.cmake)
+
+project(pico_examples C CXX ASM)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+set(PICO_BOARD pico_w)
+
+if (PICO_SDK_VERSION_STRING VERSION_LESS "1.3.0")
+    message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.3.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
+endif()
+
+set(PICO_EXAMPLES_PATH ${PROJECT_SOURCE_DIR})
+
+# Initialize the SDK
+pico_sdk_init()
+
+include(example_auto_set_url.cmake)
+# Add blink example
+add_subdirectory(blink)
+
+# Add hello world example
+add_subdirectory(hello_world)
+
+add_compile_options(-Wall
+        -Wno-format          # int != int32_t as far as the compiler is concerned because gcc has int32_t as long int
+        -Wno-unused-function # we have some for the docs that aren't called
+        )
+if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    add_compile_options(-Wno-maybe-uninitialized)
+endif()
+
+include(FreeRTOS_Kernel_import.cmake)
+add_executable(integration
+integration.c
+        ${PICO_LWIP_CONTRIB_PATH}/apps/ping/ping.c
+        )
+target_compile_definitions(integration PRIVATE
+        WIFI_SSID=\"${WIFI_SSID}\"
+        WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+        NO_SYS=0            # don't want NO_SYS (generally this would be in your lwipopts.h)
+        LWIP_SOCKET=1       # we need the socket API (generally this would be in your lwipopts.h)
+        PING_USE_SOCKETS=1
+        )
+target_include_directories(integration PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}
+        ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts
+        ${PICO_LWIP_CONTRIB_PATH}/apps/ping
+        )
+target_link_libraries(integration
+        hardware_adc
+        hardware_pwm
+        pico_cyw43_arch_lwip_sys_freertos
+        pico_stdlib
+        pico_lwip_iperf
+        FreeRTOS-Kernel-Heap4 # FreeRTOS kernel and dynamic heap
+        )
+pico_enable_stdio_usb(integration 1)
+pico_add_extra_outputs(integration)
