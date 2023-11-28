@@ -65,3 +65,36 @@ Drag and drop the generated .uf2 file from the build directory onto the RPI-RP2 
 
 ## Need all the pin connections listed here!
 
+### Partial Integration
+
+Under the partial_integration folder, you will find 4 subfolders for each of this project's partial integration.
+
+1. /motor_forward_straight
+2. /barcode_scanner_wifi
+3. /motor_turn_magn
+4. /obstacle_detector
+
+### motor_forward_straight
+
+The diagram below is the flow chart for the integration of:
+
+1. motor driver
+2. encoder drivers
+3. PID Controller
+4. FreeRTOS
+
+![Screenshot of integration #1 Flowchart - Visual Studio Code](/Diagram/flowchart%20-%20motor_forward_straight.png)
+
+## What it does:
+
+It has 3 tasks: Task 1) check_speed_a_task, Task 2) check_speed_b_task, Task 3) move_forward_task.
+
+Task 1 & 2 uses GPIO Interrupts together with the encoder module to trigger the check_speed_callback(). This callback will then calculate the speed for each wheel and send the value trhough the Queue Handlers managed by RTOS.
+
+Task 3 will then receive the value from the queue buffers. with that, based on the two speeds (speedA and speedB), error and speed_correction is being calculated.
+
+![Screenshot of move_forward_task error ans speed_correction code - Visual Studio Code](/docs/error_and_speed_correction_code.png)
+
+Finally, the speed of the motor chnages according to the speed_correction as shown below:
+
+![Screenshot of motor speed change code - Visual Studio Code](/docs/speed_changes.png.png)
