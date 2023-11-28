@@ -1,10 +1,10 @@
-# INF2004 - T15 - Pico W Motor Control Project
+# INF2004 - T15 - Pico W robot car Project
 
 This project is about developing an intelligent autonomous robotic car with two wheels, guided by the Raspberry Pi Pico microcontroller. It involves utilizing a range of sensors and a sophisticated PID (Proportional-Integral-Derivative) control system. The challenge is to engineer a robotic vehicle capable of navigating a pre-set track while proficiently avoiding obstacles and accurately decoding barcodes using infrared sensors. The integration of the PID controller is crucial, as it significantly improves the precision and stability of the car's movements, ensuring smooth navigation and effective barcode scanning.
 
 ## Getting Started
 
-These instructions will guide you through the setup and deployment of the motor control project on your Raspberry Pi Pico W.
+These instructions will guide you through the setup and deployment of the robot car project on your Raspberry Pi Pico W.
 
 ### Dependencies
 
@@ -167,6 +167,12 @@ The diagram below is the flowchart for the integration of:
 In main(), the motor can either turn left or right, based on which line of code you uncomment and comment at a given point of time.
 
 ![Screenshot of turning sides code - Visual Studio Code](/docs/turn_left_or_right.png)
+
+Once executed, the robot car will move forward first. Afterwards it will turn either left or right, depending on the cinfiguration made as mentioned above.
+
+The magnetometer will measure the angle turn from the y-axis. Either a 90 degress to the right (+90°) or left (-90°).
+
+Finally, it will move forward a while more.
 
 
 
