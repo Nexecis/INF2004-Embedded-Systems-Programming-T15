@@ -65,7 +65,7 @@ Drag and drop the generated .uf2 file from the build directory onto the RPI-RP2 
 
 ## Need all the pin connections listed here!
 
-### Partial Integration
+# Partial Integration
 
 Under the partial_integration folder, you will find 4 subfolders for each of this project's partial integration.
 
@@ -85,7 +85,7 @@ The diagram below is the flow chart for the integration of:
 
 ![Screenshot of integration #1 Flowchart - Visual Studio Code](/Diagram/flowchart%20-%20motor_forward_straight.png)
 
-## What it does:
+### What it does:
 
 It has 3 tasks: Task 1) check_speed_a_task, Task 2) check_speed_b_task, Task 3) move_forward_task.
 
