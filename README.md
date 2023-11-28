@@ -37,13 +37,14 @@ Create a build directory and navigate into it:
     cd build
     ```
 
-Run CMake to build the project:
+2. **Run CMake to build the project**:
 
     ```bash
     Copy code
     cmake ..
     make
     ```
+
 Uploading to the Pico W:
 
 Connect your Raspberry Pi Pico W to your computer while holding the BOOTSEL button to put it into USB mass storage mode.
