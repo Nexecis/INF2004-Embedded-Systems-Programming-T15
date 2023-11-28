@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "hardware/pwm.h"
 #include "magnometer.h"
+#include "hardware/gpio.h"
 
 #define I2C_SDA_PIN 6
 #define I2C_SCL_PIN 7
@@ -191,6 +192,10 @@ void rightTurn(){
 int main() {
     stdio_init_all();
     sleep_ms(5000);
+
+    gpio_init(8);
+    gpio_set_dir(8, GPIO_OUT);
+    gpio_put(8, 1);
     
     motor_setup();
     init_i2c_pin(I2C, BAUDRATE, I2C_SDA_PIN, I2C_SCL_PIN);

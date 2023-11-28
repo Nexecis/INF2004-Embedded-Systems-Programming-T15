@@ -314,10 +314,6 @@ int main(void) {
     gpio_set_dir(28, GPIO_OUT);
     gpio_put(28, 1);
 
-    gpio_init(28);
-    gpio_set_dir(28, GPIO_OUT);
-    gpio_put(28, 1);
-
     const char *rtos_name;
 #if (portSUPPORT_SMP == 1)
     rtos_name = "FreeRTOS SMP";                   // Define the name for SMP-enabled FreeRTOS.

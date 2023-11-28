@@ -60,11 +60,60 @@ Drag and drop the generated .uf2 file from the build directory onto the RPI-RP2 
 
 ### Hardware Setup
 
-1. **Pico GPIO Connection**
+**Pico GPIO Connection**
 
 ![Screenshot of Pico w - Visual Studio Code](/docs/pico_w_board.jpg)
 
-## Need all the pin connections listed here!
+Overall Pins' connection:
+
+1. **L298N motor driver**
+
+![Screenshot of motor driver module - Visual Studio Code](/docs/L298N_motor_driver.jpg)
+
+GP0: ENA
+GP1: ENB
+GND (Pinout 3): GND
+GP2: IN2
+GP3: IN1
+GP4: IN4
+GP5: IN3
+VBUS: +5V
+
+OUT1: left motor (GND)
+OUT2: left motor (+5V)
+OUT3: right motor (GND)
+OUT4: right motor (+5V)
+
+2. **GY-511 magnometer driver**
+
+![Screenshot of magnetometer module - Visual Studio Code](/docs/GY-511_magnetometer.jpg)
+
+GND (Pinout 8): GND
+GP6: SDA
+GP7: SCL
+GP8: Vcc
+
+3. **HC020K rotary encoder driver**
+
+![Screenshot of rotary encoder module - Visual Studio Code](/docs/HC020K_rotary_encoder.png)
+
+GND (Pinout 13): GND (Left encoder/wheel)
+GP22: Vcc (Left encoder/wheel)
+GP26: OUT (Left encoder/wheel)
+GP27: OUT (right encoder/wheel)
+GP28: Vcc (right encoder/wheel)
+GND (Pinout 38): GND (right encoder/wheel)
+
+4. **HC-SR04 Ultrasound driver**
+
+![Screenshot of ultrasound sensor module - Visual Studio Code](/docs/HC-SR04_ultrasound_sensor.jpg)
+
+GND (Pinout 18):
+GP14:
+GP15:
+VBUS: Vcc
+
+
 
 # Partial Integration
 
