@@ -76,7 +76,7 @@ Under the partial_integration folder, you will find 4 subfolders for each of thi
 
 ### motor_forward_straight
 
-The diagram below is the flow chart for the integration of:
+The diagram below is the flowchart for the integration of:
 
 1. motor driver
 2. encoder drivers
