@@ -1,8 +1,4 @@
 #include <stdio.h>
-// #include <math.h>
-// #include "pico/stdlib.h"
-// #include "hardware/i2c.h"
-
 #include "magnometer.h"
 
 #define I2C_SDA_PIN 4
@@ -26,28 +22,3 @@ int main() {
     }
     return 0;
 }
-
-
-
-/*
-# Replace 'picow_blink' with file name (without extension)
-# Define the target name as a variable
-set(target_name picow_blink)
-
-add_executable(${target_name} ${target_name}.c)
-
-# pull in common dependencies and additional pwm hardware support
-target_link_libraries(${target_name} 
-        pico_magnometer
-)
-
-# allow the user to use serial monitor
-pico_enable_stdio_usb(${target_name} 1)
-pico_enable_stdio_uart(${target_name} 1)
-
-# create map/bin/hex file etc.
-pico_add_extra_outputs(${target_name})
-
-# add url via pico_set_program_url
-example_auto_set_url(${target_name})
-*/

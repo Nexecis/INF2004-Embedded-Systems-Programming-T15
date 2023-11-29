@@ -18,6 +18,11 @@ uint init_i2c_pin(i2c_inst_t *i2c, uint baudrate, uint sda_gpio, uint scl_gpio);
  */
 int init_magnometer();
 
+
+/*! \brief   Gets angle in degrees
+ * 
+ * \return Angle in degrees based on the X and Y values from the magnometer
+ */
 double magnometer_angle();
 
 
