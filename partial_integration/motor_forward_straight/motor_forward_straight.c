@@ -1,69 +1,71 @@
-#include <stdio.h>                                  // Include the standard I/O library.
-#include "pico/cyw43_arch.h"                        // Include the CYW43 architecture-specific header.
-#include "pico/stdlib.h"                            // Include the Pico standard library.
-#include "FreeRTOS.h"                               // Include the FreeRTOS header.
-#include "task.h"                                   // Include the task management header.
-#include "queue.h"                                  // Include the queue header.
-#include "hardware/gpio.h"
-#include "hardware/adc.h"
-#include "hardware/pwm.h"
+#include <stdio.h>                                  // Standard I/O for debugging and output.
+#include "pico/cyw43_arch.h"                        // CYW43 architecture for WiFi/Bluetooth functionality.
+#include "pico/stdlib.h"                            // Standard library for Pico functionality.
+#include "FreeRTOS.h"                               // FreeRTOS for real-time operating system capabilities.
+#include "task.h"                                   // Task management for FreeRTOS.
+#include "queue.h"                                  // Queue management for inter-task communication.
+#include "hardware/gpio.h"                          // GPIO for general-purpose input/output functionality.
+#include "hardware/adc.h"                           // ADC for analog-to-digital conversion (not used in this snippet).
+#include "hardware/pwm.h"                           // PWM for pulse width modulation, used in motor control.
 
-#define QUEUE_SIZE 10                               // Define the size of the queues.
+#define QUEUE_SIZE 10                               // Queue size for speed measurement queues.
 
 #ifndef RUN_FREERTOS_ON_CORE
-#define RUN_FREERTOS_ON_CORE 0                      // Define the default core to run FreeRTOS on.
+#define RUN_FREERTOS_ON_CORE 0                      // Default core for running FreeRTOS, configurable.
 #endif
 
-#define TEST_TASK_PRIORITY (tskIDLE_PRIORITY + 1UL) // Define the priority for the test task.
+#define TEST_TASK_PRIORITY (tskIDLE_PRIORITY + 1UL) // Priority level for the test task.
 
+// Queue handles for inter-task communication regarding motor speed.
 static QueueHandle_t xSpeedAQueue;
 static QueueHandle_t xSpeedBQueue;
 
+// Motor control GPIO pins definitions for clarity and maintainability.
+#define MOTOR_ENA 0  // Enable pin for motor A.
+#define MOTOR_IN1 2  // Input 1 for motor A direction control.
+#define MOTOR_IN2 3  // Input 2 for motor A direction control.
 
-// Define the GPIO pins for motor control
-#define MOTOR_ENA 0  // Enable motor A
-#define MOTOR_IN1 2  // Input 1 for motor A
-#define MOTOR_IN2 3  // Input 2 for motor A
+#define MOTOR_ENB 1  // Enable pin for motor B.
+#define MOTOR_IN3 5  // Input 1 for motor B direction control.
+#define MOTOR_IN4 4  // Input 2 for motor B direction control.
 
-#define MOTOR_ENB 1  // Enable motor B
-#define MOTOR_IN3 5  // Input 1 for motor B
-#define MOTOR_IN4 4  // Input 2 for motor B
-
+// Physical constants and debounce delays for encoder processing.
 #define PI 3.14159
 #define WHEEL_DIAMETER 6.5
 #define DEBOUNCE_DELAY_A_MS 3
 #define DEBOUNCE_DELAY_B_MS 3
 
-// Define a global variable to store the last event time for debouncing
+// Last event time for debouncing in interrupt handlers.
 static uint32_t last_event_1_time = 0;
 static uint32_t last_event_2_time = 0;
 
-// Define a structure to represent the encoder data
+// Encoder data structure to encapsulate encoder-related information.
 typedef struct {
-    uint64_t start_time;
-    float quarter_rotation;
-    float arch;
-    int pinhole;
-    float total_distance;
-    uint64_t milliseconds_per_cycle;
-    float speed;
+    uint64_t start_time;          // Start time for speed calculation.
+    float quarter_rotation;       // Distance for a quarter rotation of the wheel.
+    float total_distance;         // Total distance covered by the wheel.
+    int pinhole;                  // Pinhole count for encoder state.
+    uint64_t milliseconds_per_cycle; // Time for one encoder cycle.
+    float speed;                  // Calculated speed of the wheel.
 } Encoder;
 
-// Initialize an instance of the Encoder structure
+// Encoder instances for each wheel.
 Encoder encoder1 = {0, 0.0, 0.0, 0, 0.0, 0, 0.0};
 Encoder encoder2 = {0, 0.0, 0.0, 0, 0.0, 0, 0.0};
 
+// PID controller structure for motor speed control.
 typedef struct {
-    float Kp; // Proportional gain
-    float Ki; // Integral gain
-    float Kd; // Derivative gain
+    float Kp; // Proportional gain.
+    float Ki; // Integral gain.
+    float Kd; // Derivative gain.
 
-    float integral;
-    float previous_error;
+    float integral;             // Integral term for integral gain.
+    float previous_error;       // Previous error for derivative calculation.
 } PIDController;
 
 PIDController pid;
 
+// Initialize PID controller with specified gains.
 void pid_init(float Kp, float Ki, float Kd) {
     pid.Kp = Kp;
     pid.Ki = Ki;
@@ -73,12 +75,13 @@ void pid_init(float Kp, float Ki, float Kd) {
     pid.previous_error = 0.0f;
 }
 
-
+// Update PID controller with new error value and time delta.
 float pid_update(float error, float dt) {
     pid.integral += error * dt;
     float derivative = (error - pid.previous_error) / dt;
     pid.previous_error = error;
 
+    // Calculate control output.
     return (pid.Kp * error) + (pid.Ki * pid.integral) + (pid.Kd * derivative);
 }
 

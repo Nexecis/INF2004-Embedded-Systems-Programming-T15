@@ -52,66 +52,84 @@ Create a build directory and navigate into it:
 
 Connect your Raspberry Pi Pico W to your computer while holding the BOOTSEL button to put it into USB mass storage mode.
 
-![Screenshot of Pico w before uploading - Visual Studio Code](/docs/upload_pico.jpeg)
+![Screenshot of Pico w before uploading - Visual Studio Code](/image/upload_pico.jpeg)
 
 Drag and drop the generated .uf2 file from the build directory onto the RPI-RP2 volume.
 
-![Screenshot of uf2 file prepared - Visual Studio Code](/docs/uf2_file.png)
+![Screenshot of uf2 file prepared - Visual Studio Code](/image/uf2_file.png)
 
 ### Hardware Setup
 
 **Pico GPIO Connection**
 
-![Screenshot of Pico w - Visual Studio Code](/docs/pico_w_board.jpg)
+![Screenshot of Pico w - Visual Studio Code](/image/pico_w_board.jpg)
 
 Overall Pins' connection:
 
-1. **L298N motor driver**
+1. **L298N motor controller module**
 
-![Screenshot of motor driver module - Visual Studio Code](/docs/L298N_motor_driver.jpg)
+![Screenshot of motor driver module - Visual Studio Code](/image/L298N_motor_controller.jpg)
 
-GP0: ENA
-GP1: ENB
-GND (Pinout 3): GND
-GP2: IN2
-GP3: IN1
-GP4: IN4
-GP5: IN3
-VBUS: +5V
+GP0: ENA\
+GP1: ENB\
+GND (Pinout 3): GND\
+GP2: IN2\
+GP3: IN1\
+GP4: IN4\
+GP5: IN3\
+3V3: +5V\
 
-OUT1: left motor (GND)
-OUT2: left motor (+5V)
-OUT3: right motor (GND)
-OUT4: right motor (+5V)
+OUT1: left motor (GND)\
+OUT2: left motor (+5V)\
+OUT3: right motor (GND)\
+OUT4: right motor (+5V)\
 
-2. **GY-511 magnometer driver**
+2. **GY-511 magnetometer module**
 
-![Screenshot of magnetometer module - Visual Studio Code](/docs/GY-511_magnetometer.jpg)
+![Screenshot of magnetometer module - Visual Studio Code](/image/GY-511_magnetometer.jpg)
 
-GND (Pinout 8): GND
-GP6: SDA
-GP7: SCL
-GP8: Vcc
+GND (Pinout 8): GND\
+GP6 (I2C1 SDA): SDA\
+GP7 (I2C1 SCL): SCL\
+GP8: Vcc\
 
-3. **HC020K rotary encoder driver**
+3. **HC020K rotary encoder module**
 
-![Screenshot of rotary encoder module - Visual Studio Code](/docs/HC020K_rotary_encoder.png)
+![Screenshot of rotary encoder module - Visual Studio Code](/image/HC020K_rotary_encoder.png)
 
-GND (Pinout 13): GND (Left encoder/wheel)
-GP22: Vcc (Left encoder/wheel)
-GP26: OUT (Left encoder/wheel)
-GP27: OUT (right encoder/wheel)
-GP28: Vcc (right encoder/wheel)
-GND (Pinout 38): GND (right encoder/wheel)
+GND (Pinout 13): GND (Left encoder/wheel)\
+GP22: Vcc (Left encoder/wheel)\
+GP26: OUT (Left encoder/wheel)\
+GP27: OUT (right encoder/wheel)\
+GP28: Vcc (right encoder/wheel)\
+GND (Pinout 38): GND (right encoder/wheel)\
 
-4. **HC-SR04 Ultrasound driver**
+4. **HC-SR04 Ultrasound sensor module**
 
-![Screenshot of ultrasound sensor module - Visual Studio Code](/docs/HC-SR04_ultrasound_sensor.jpg)
+![Screenshot of ultrasound sensor module - Visual Studio Code](/image/HC-SR04_ultrasound_sensor.jpg)
 
-GND (Pinout 18):
-GP14:
-GP15:
-VBUS: Vcc
+GP13: Vcc\
+GND (Pinout 18): GND\
+GP14: TRIG\
+GP15: ECHO\
+
+5. **TCRT5000 Infra-Red line tracking module**
+
+![Screenshot of infrared sensor module - Visual Studio Code](/image/TCRT5000_infrared_sensor.jpg)
+
+GP16: Vcc\
+GP17: A0 (Analog)\
+GND (Pinout 23): GND\
+
+# Project Block Diagram
+
+## Components Block Diagram
+
+![Screenshot of main block diagram - Visual Studio Code](/diagram/Block%20Diagram_Final.png)
+
+## Data Flow Diagram
+
+![Screenshot of data flow diagram - Visual Studio Code](/diagram/Data%20Flow%20Diagram.png)
 
 
 
@@ -128,14 +146,14 @@ Under the partial_integration folder, you will find 4 subfolders for each of thi
 
 ## motor_forward_straight
 
-The diagram below is the flowchart for the integration of:
+The diagram below is the code flowchart for the integration of:
 
 1. motor driver
 2. encoder driver
 3. PID Controller
 4. FreeRTOS
 
-![Screenshot of integration #1 Flowchart - Visual Studio Code](/Diagram/Flowchart_motor_forward_straight.png)
+![Screenshot of integration #1 Flowchart - Visual Studio Code](/diagram/Flowchart_motor_forward_straight.png)
 
 ### What it does:
 
@@ -149,24 +167,24 @@ Task 3 will then receive the value from the queue buffers. with that, based on t
 
 Finally, the speed of the motor chnages according to the speed_correction as shown below:
 
-![Screenshot of motor speed change code - Visual Studio Code](/docs/speed_changes.png)
+![Screenshot of motor speed change code - Visual Studio Code](/image/speed_changes.png)
 
 
 
 ## motor_turn_magno
 
-The diagram below is the flowchart for the integration of:
+The diagram below is the code flowchart for the integration of:
 
 1. motor driver
 2. magnometer driver
 
-![Screenshot of integration #2 Flowchart - Visual Studio Code](/Diagram/Flowchart_motor_turn_magno.png)
+![Screenshot of integration #2 Flowchart - Visual Studio Code](/diagram/Flowchart_motor_turn_magno.png)
 
 ### What it does:
 
 In main(), the motor can either turn left or right, based on which line of code you uncomment and comment at a given point of time.
 
-![Screenshot of turning sides code - Visual Studio Code](/docs/turn_left_or_right.png)
+![Screenshot of turning sides code - Visual Studio Code](/image/turn_left_or_right.png)
 
 Once executed, the robot car will move forward first. Afterwards it will turn either left or right, depending on the cinfiguration made as mentioned above.
 
@@ -178,7 +196,57 @@ Finally, it will move forward a while more.
 
 ## barcode_scanner_wifi
 
+The diagram below is the code flowchart for the integration of:
+
+1. IR sensor
+2. WIFI (TCP protocol)
+3. FreeRTOS
+
+TCP Server:
+![Screenshot of integration #3 Flowchart server - Visual Studio Code](/diagram/Flowchart_barcode_scanner_wifi_server.png)
+
+TCP CLient (Python):
+![Screenshot of integration #3 Flowchart client - Visual Studio Code](/diagram/Flowchart_barcode_scanner_wifi_client.png)
+
+### What it does:
+
+As the IR sensor detect and scans the barcode lines one by one (Hand-driven), it is being transmitted to the TCP client on another device in the network.
+
+The time take for each line determine the type of data it represents (as shown in the code below).
+
+![Screenshot of ir barcode append - Visual Studio Code](/image/barcode_append.png)
+
+Once a full-scan has been done, the sever will decode the barcode and transmits it to the client (as shown below).
+
+![Screenshot of ir barcode console print - Visual Studio Code](/image/barcode_console_print.jpg)
+
+(Note: the barcode scanning can be done in reverse too!)
+
+![Screenshot of ir barcode reverse code - Visual Studio Code](/image/barcode_reverse.png)
 
 
 
 ## obstacle_detector
+
+The diagram below is the code flowchart for the integration of:
+
+1. motor driver
+2. ultrasound sensor
+3. FreeRTOS
+
+![Screenshot of integration #4 Flowchart - Visual Studio Code](/diagram/Flowchart_obstacle_detector.png)
+
+### What it does:
+
+The car will continue to drive till it meets an obstacle blocking its way forward, detected using the Ultrasound sensor.
+
+Once detected at a distance of below 30cm, it would stop and reverse for some distants.
+
+![Screenshot of ultrasound detection code - Visual Studio Code](/image/ultrsound_detect.png)
+
+after awhile, It would continue to drive again and keep detecting obstacle ahead of it.
+
+![Screenshot of ultrasound task code - Visual Studio Code](/image/ultrasound_task.png)
+
+# Conclusion
+

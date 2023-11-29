@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include "hardware/gpio.h"
 
-#define IR_SENSOR_PIN 28  // Pin for the IR sensor
+#define IR_SENSOR_PIN 17  // Pin for the IR sensor
 
 #define TCP_PORT 4242
 #define BUF_SIZE 1
@@ -397,6 +397,10 @@ void run_tcp_server_test(void) {
 
 int main() {
     stdio_init_all();
+
+    gpio_init(16);
+    gpio_set_dir(16, GPIO_OUT);
+    gpio_put(16, 1);
 
     if (cyw43_arch_init()) {
         printf("failed to initialise\n");
