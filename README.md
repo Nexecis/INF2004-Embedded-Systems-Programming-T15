@@ -18,6 +18,8 @@ These instructions will guide you through the setup and deployment of the robot 
 - Appropriate connecting wires and resistors for sensor integration
 - Personal computer for compiling and uploading the firmware to the Raspberry Pi Pico W
 
+**Images of individual components can be found below.
+
 ### Installing
 
 1. **Setting Up the Pico SDK**:
@@ -163,7 +165,7 @@ Task 1 & 2 uses GPIO Interrupts together with the encoder module to trigger the 
 
 Task 3 will then receive the value from the queue buffers. with that, based on the two speeds (speedA and speedB), error and speed_correction is being calculated.
 
-![Screenshot of move_forward_task error ans speed_correction code - Visual Studio Code](/docs/error_and_speed_correction_code.png)
+![Screenshot of move_forward_task error ans speed_correction code - Visual Studio Code](/image/error_and_speed_correction_code.png)
 
 Finally, the speed of the motor chnages according to the speed_correction as shown below:
 
@@ -178,7 +180,7 @@ The diagram below is the code flowchart for the integration of:
 1. motor driver
 2. magnometer driver
 
-![Screenshot of integration #2 Flowchart - Visual Studio Code](/diagram/Flowchart_motor_turn_magno.png)
+![Screenshot of integration #2 Flowchart - Visual Studio Code](/diagram//Flowchart_motor_turn_magno.png)
 
 ### What it does:
 
