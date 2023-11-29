@@ -253,10 +253,23 @@ after awhile, It would continue to drive again and keep detecting obstacle ahead
 
 ![Screenshot of ultrasound task code - Visual Studio Code](/image/ultrasound_task.png)
 
+# Strengths and Limitations
+
+## Strengths:
+
+1. **Educational Foundation for IoT**: This project lays a solid groundwork for upcoming Internet-of-Things modules, enriching our skillset with transferable knowledge and practical experience.
+2. **Innovative Use of IR Sensors**: The creative application of IR line tracking sensors for barcode scanning exemplifies our ability to think outside the box and repurpose technology beyond its conventional use.
+3. **Complex System Integration**: Successfully incorporating various components like motor drivers, encoders, and sensors demonstrates our proficiency in complex system integration and real-time control using a PID controller.
+
+## Limitations:
+
+1. **Sensor Limitations and Code Dependency**: The limitations of the IR sensor's native capabilities posed significant challenges. These were addressed through intricate coding solutions, highlighting a dependency on software to compensate for hardware constraints.
+2. **Integration Challenges**: While we achieved partial integration, the full system integration, with seamless interplay between all components, remained incomplete. This aspect of the project underscored the complexities and intricacies involved in synchronizing multiple elements in robotic systems.
+
 # Conclusion
 
 In our INF2004 - T15 - Pico W robot car Project, our team embarked on an ambitious journey in autonomous robotics, leveraging the Raspberry Pi Pico W. We integrated various components like motor drivers, encoders, magnetometers, IR sensors, and ultrasound sensors, and learned about the importance of control systems through the implementation of a PID controller. This modular approach allowed us to focus on understanding each component before attempting their collective integration.
 
 However, we encountered challenges in achieving a full system integration, where all components worked in unison. This part of our journey, though not yielding our intended outcome, was invaluable in teaching us about the complexities of system integration in robotics. It highlighted the necessity for precise coordination among various elements in complex systems like ours.
 
-Despite the challenges in achieving complete integration, our project was profoundly educational. We gained deep insights into the realms of hardware integration, software development, and real-time operating systems through FreeRTOS. The skills and knowledge we acquired, especially in navigating through challenges, are assets that will undoubtedly benefit us in future endeavors in robotics and embedded systems.
+Despite the challenges in achieving complete integration, our project was profoundly educational. We gained deep insights into the realms of hardware integration, software development, and real-time operating systems through FreeRTOS. The project not only enhanced our technical capabilities but also fostered critical problem-solving skills and innovative thinking. These skills and knowledge we acquired are assets that will undoubtedly benefit us in future endeavors in robotics and embedded systems.
