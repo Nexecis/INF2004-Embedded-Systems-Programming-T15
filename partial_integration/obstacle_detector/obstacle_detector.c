@@ -172,9 +172,6 @@ void ultrasonicTask(void *pvParameters) {
 int main() {
     stdio_init_all();
     motor_setup();
-    gpio_init(13);
-    gpio_set_dir(13, GPIO_OUT);
-    gpio_put(13, 1);
 
     setupUltrasonicPins(TRIG_PIN, ECHO_PIN);
 

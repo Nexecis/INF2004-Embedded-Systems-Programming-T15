@@ -77,12 +77,12 @@ GP2: IN2\
 GP3: IN1\
 GP4: IN4\
 GP5: IN3\
-3V3: +5V\
+3V3 (Connection splitter): +5V\
 
 OUT1: left motor (GND)\
 OUT2: left motor (+5V)\
 OUT3: right motor (GND)\
-OUT4: right motor (+5V)\
+OUT4: right motor (+5V)
 
 2. **GY-511 magnetometer module**
 
@@ -91,7 +91,7 @@ OUT4: right motor (+5V)\
 GND (Pinout 8): GND\
 GP6 (I2C1 SDA): SDA\
 GP7 (I2C1 SCL): SCL\
-GP8: Vcc\
+GP8: Vcc
 
 3. **HC020K rotary encoder module**
 
@@ -102,16 +102,16 @@ GP22: Vcc (Left encoder/wheel)\
 GP26: OUT (Left encoder/wheel)\
 GP27: OUT (right encoder/wheel)\
 GP28: Vcc (right encoder/wheel)\
-GND (Pinout 38): GND (right encoder/wheel)\
+GND (Pinout 38): GND (right encoder/wheel)
 
 4. **HC-SR04 Ultrasound sensor module**
 
 ![Screenshot of ultrasound sensor module - Visual Studio Code](/image/HC-SR04_ultrasound_sensor.jpg)
 
-GP13: Vcc\
 GND (Pinout 18): GND\
 GP14: TRIG\
 GP15: ECHO\
+3V3 (Connection splitter): Vcc
 
 5. **TCRT5000 Infra-Red line tracking module**
 
@@ -119,7 +119,7 @@ GP15: ECHO\
 
 GP16: Vcc\
 GP17: A0 (Analog)\
-GND (Pinout 23): GND\
+GND (Pinout 23): GND
 
 # Project Block Diagram
 
