@@ -125,11 +125,11 @@ GND (Pinout 23): GND\
 
 ## Components Block Diagram
 
-![Screenshot of main block diagram - Visual Studio Code](/diagram/Block%20Diagram_Final.png)
+![Screenshot of main block diagram - Visual Studio Code](/diagram/Block_Diagram_Final.png)
 
 ## Data Flow Diagram
 
-![Screenshot of data flow diagram - Visual Studio Code](/diagram/Data%20Flow%20Diagram.png)
+![Screenshot of data flow diagram - Visual Studio Code](/diagram/Data_Flow_Diagram.png)
 
 
 
