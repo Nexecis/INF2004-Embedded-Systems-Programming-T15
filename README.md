@@ -158,7 +158,7 @@ The diagram below is the code flowchart for the integration of:
 3. PID Controller
 4. FreeRTOS
 
-![Screenshot of integration #1 Flowchart - Visual Studio Code](/diagram/Flowchart_motor_forward_straight.png)
+![Screenshot of partial integration #1 Flowchart - Visual Studio Code](/diagram/Flowchart_motor_forward_straight.png)
 
 ### What it does:
 
@@ -183,7 +183,7 @@ The diagram below is the code flowchart for the integration of:
 1. motor driver
 2. magnometer driver
 
-![Screenshot of integration #2 Flowchart - Visual Studio Code](/diagram//Flowchart_motor_turn_magno.png)
+![Screenshot of partial integration #2 Flowchart - Visual Studio Code](/diagram//Flowchart_motor_turn_magno.png)
 
 ### What it does:
 
@@ -208,10 +208,10 @@ The diagram below is the code flowchart for the integration of:
 3. FreeRTOS
 
 TCP Server:
-![Screenshot of integration #3 Flowchart server - Visual Studio Code](/diagram/Flowchart_barcode_scanner_wifi_server.png)
+![Screenshot of partial integration #3 Flowchart server - Visual Studio Code](/diagram/Flowchart_barcode_scanner_wifi_server.png)
 
 TCP CLient (Python):
-![Screenshot of integration #3 Flowchart client - Visual Studio Code](/diagram/Flowchart_barcode_scanner_wifi_client.png)
+![Screenshot of partial integration #3 Flowchart client - Visual Studio Code](/diagram/Flowchart_barcode_scanner_wifi_client.png)
 
 ### What it does:
 
@@ -239,7 +239,7 @@ The diagram below is the code flowchart for the integration of:
 2. ultrasound sensor
 3. FreeRTOS
 
-![Screenshot of integration #4 Flowchart - Visual Studio Code](/diagram/Flowchart_obstacle_detector.png)
+![Screenshot of partial integration #4 Flowchart - Visual Studio Code](/diagram/Flowchart_obstacle_detector.png)
 
 ### What it does:
 
@@ -264,7 +264,9 @@ after awhile, It would continue to drive again and keep detecting obstacle ahead
 ## Limitations:
 
 1. **Sensor Limitations and Code Dependency**: The limitations of the IR sensor's native capabilities posed significant challenges. These were addressed through intricate coding solutions, highlighting a dependency on software to compensate for hardware constraints.
-2. **Integration Challenges**: While we achieved partial integration, the full system integration, with seamless interplay between all components, remained incomplete. This aspect of the project underscored the complexities and intricacies involved in synchronizing multiple elements in robotic systems.
+2. **Integration Challenges**: While we achieved partial integration, the full system integration, with seamless interplay between all components, remained incomplete. This aspect of the project underscored the complexities and intricacies involved in synchronizing multiple elements in robotic systems. However, we have though of how would the full integration would be:
+
+![Screenshot of full integration Flowchart - Visual Studio Code](/diagram/Flowchart_full_integration.png)
 
 # Conclusion
 
